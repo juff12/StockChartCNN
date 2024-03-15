@@ -1,5 +1,5 @@
 # StockChartCNN
-CNN trained on 1000s of images taken of candle stick stock charts. 
+CNN trained on 5000,000 images taken of candle stick stock charts. 
 
 Images were taken for all SP500 stocks for 1 hour, 4 hour, and 1 day time frames (from 2018-2023)
 Goal is to predict the next few candle sticks with nothing more than the image. Since stock are as much
