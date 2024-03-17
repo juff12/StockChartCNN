@@ -4,6 +4,7 @@ from pathlib import Path
 import pickle
 from datetime import date, datetime, timezone
 from tqdm import tqdm
+import csv
 import sys
 
 def get_ticker_data(presets: tuple, client: RESTClient):
@@ -64,11 +65,11 @@ def main():
     time_intervals = pickle.load(open('data/crypto/iterables/time_intervals.pkl', 'rb'))
     
     # api key
-    api_key = csv.reader(open('api_key.csv', 'r')).__next__()[0]
-
-    # connect to API
+    api_key = csv.reader(open('api_key/api_key.txt', 'r')).__next__()[0]
+    
+    # connect to the API
     client = RESTClient(api_key=api_key)
-
+    
     # presets
     start = '2018-01-01'
     end = '2024-03-01'
