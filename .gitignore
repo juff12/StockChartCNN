@@ -164,4 +164,5 @@ test.py
 api_key/
 
 # temp ignores
-inputs/raw/crypto/images
+inputs/raw/
+inputs/clean/
