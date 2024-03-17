@@ -159,6 +159,9 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+# ignore folders
+test.py
+api_key/
 
 # temp ignores
 inputs/raw/images/btcusd/5_minute

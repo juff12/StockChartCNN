@@ -54,8 +54,8 @@ def running():
     time_intervals = pickle.load(open('data/crypto/iterables/time_intervals.pkl', 'rb'))
     
     # custom tickers and range
-    crypto_tickers = ['btcusd', 'ethusd', 'solusd']
-    time_intervals = ['15_minute']
+    crypto_tickers = ['btcusd', 'ethusd']
+    time_intervals = ['15_minute', '5_minute']
     
     for ticker in tqdm(crypto_tickers, desc='Crypto: '):
         for bartime in tqdm(time_intervals, desc='Bartime: '):

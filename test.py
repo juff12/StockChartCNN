@@ -64,7 +64,7 @@ def main():
     time_intervals = pickle.load(open('data/crypto/iterables/time_intervals.pkl', 'rb'))
     
     # api key
-    api_key = "LqrsJKsA_Bi3KYNXfYaFIzEL4LF57nVr"
+    api_key = csv.reader(open('api_key.csv', 'r')).__next__()[0]
 
     # connect to API
     client = RESTClient(api_key=api_key)
