@@ -67,11 +67,11 @@ def running():
                                          num_bar_gen=num_bar_gen, chart_width=chart_width, 
                                          chart_height=chart_height)
             # save the generated images
-            chart_image_gen.create_chart_images()
+            chart_image_gen.batch_screenshot(batch_size=10_000)
 
 def main():
-    testing()
-    #running()
+    #testing()
+    running()
 
 # run script
 if __name__ == '__main__':
