@@ -1,6 +1,6 @@
 from tqdm import tqdm
 import pickle
-from chart_image import ChartImage
+from stock_chart_cnn import ChartImage
 from PIL import Image
 
 def testing():

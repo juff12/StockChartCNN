@@ -9,9 +9,6 @@ class CoinbaseWrapper(object):
         """
         Initializes a new instance of the CoinbaseWrapper class.
 
-        Args:
-            ticker (str): The ticker symbol for the cryptocurrency.
-
         Returns:
             None
         """
@@ -165,7 +162,6 @@ class CoinbaseWrapper(object):
         # save the data to a csv file
         df.to_csv(self._filepath_maker(ticker, bartime))
         
-
     def get_current_price(self, ticker: str):
         """
         Retrieves the current price of the given currency from the Coinbase API.
@@ -193,34 +189,4 @@ class CoinbaseWrapper(object):
                 
                 return float(price)
         self._logger.error(f"Failed to fetch {ticker} current price.")
-        return None
-        
-    def get_ticker_list_date(self, ticker: str):
-        """
-        Retrieves the list date of the given currency from the Coinbase API.
-
-        Args:
-            ticker (str): The ticker symbol for the cryptocurrency, expects form ex: btcusd.
-
-        Returns:
-            str: The list date of the currency.
-            None: If an error occurs during the API request.
-        """
-        # format the ticker
-        ticker = ticker.upper().replace('USD','-USD')
-        
-        # Coinbase API endpoint for currency list date
-        url = "https://api.coinbase.com/v2/assets/{t}/history".format(t=ticker)
-        
-        response = requests.get(url)
-        
-        if response.status_code == 200:
-            data = response.json()
-            
-            if data is not None:
-                # Extracting the list date of the given currency
-                list_date = data['data']['created_at']
-                
-                return list_date
-        self._logger.error(f"Failed to fetch {ticker} list date.")
         return None
