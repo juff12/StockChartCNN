@@ -4,21 +4,21 @@ from pathlib import Path
 
 class ChartImage:
     def __init__(self, filename, ticker: str, bartime: str, chart_type: str, parentdir: str,
-                 barspacing=1.5, num_bars_show=120, num_bar_gen=20, chart_width=1200, chart_height=600):
+                    barspacing=1.5, num_bars_show=120, num_bar_gen=20, chart_width=1200, chart_height=600):
         """
-        Initializes an instance of the ChartImage class.
+        Initialize a ChartImage object.
 
-        Parameters:
-        - filename (str): The path to the CSV file containing the data.
-        - ticker (str): The name of the ticker.
-        - bartime (str): The bartimes of the chart.
-        - chart_type (str): The type of chart (candle, line).
-        - parentdir (str): The parent directory (crypto, stocks).
-        - barspacing (float, optional): The space between the bars on the chart. Default is 1.5.
-        - num_bars_show (int, optional): The number of bars to show on the chart. Default is 120.
-        - num_bar_gen (int, optional): The amount of new bars to generate before a screenshot. Default is 20.
-        - chart_width (int, optional): The width of the chart. Default is 1200.
-        - chart_height (int, optional): The height of the chart. Default is 600.
+        Args:
+            filename (str): The path to the CSV file containing the chart data.
+            ticker (str): The name of the ticker.
+            bartime (str): The bartimes of the chart.
+            chart_type (str): The type of chart (candle, line).
+            parentdir (str): The parent directory (crypto, stocks).
+            barspacing (float, optional): The space between the bars on the chart. Defaults to 1.5.
+            num_bars_show (int, optional): The number of bars to show on the chart. Defaults to 120.
+            num_bar_gen (int, optional): The amount of new bars to generate before a screenshot. Defaults to 20.
+            chart_width (int, optional): The width of the chart. Defaults to 1200.
+            chart_height (int, optional): The height of the chart. Defaults to 600.
         """
         self._df = self.read_csv(filename)
         self._ticker = ticker
@@ -30,7 +30,7 @@ class ChartImage:
         self._num_bar_gen = num_bar_gen
         self._chart_width = chart_width
         self._chart_height = chart_height
-    
+
     def _setup_chart(self):
         """
         Sets up and returns a Chart object with specified width and height.
@@ -42,7 +42,7 @@ class ChartImage:
         chart.crosshair('hidden')
         chart.grid(False,False)
         return chart
-
+    
     def read_csv(self, filename: str):
         """
         Reads a CSV file and returns the data as a pandas DataFrame.
@@ -195,5 +195,7 @@ class ChartImage:
         for i in range(0, self._df['date'].size, batch_size):
             # create a batch of the data
             batch_df = self._df.iloc[i:i+batch_size].copy()
+            if i + batch_size >= self._df['date'].size:
+                batch_df = self._df.iloc[i:].copy()
             self.create_chart_images(batch_df)
         
