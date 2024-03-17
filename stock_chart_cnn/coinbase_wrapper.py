@@ -43,7 +43,7 @@ class CoinbaseWrapper(object):
         filepath.parent.mkdir(parents=True, exist_ok=True)
         return filepath
     
-    def get_4hour_data(self, ticker: str, start: int):
+    def _get_4hour_data(self, ticker: str, start: int):
         """
         Fetches 4-hour candlestick data for the given currency from the Coinbase API.
 
@@ -53,9 +53,9 @@ class CoinbaseWrapper(object):
         Returns:
             pandas.DataFrame or None: A DataFrame containing the fetched candlestick data, or None if the request fails.
         """
-        candles_df = self.fetch_data(ticker, '1_hour', start)
+        start, candles_df = self._fetch_data(ticker, '1_hour', start)
         if candles_df is not None:
-            start, df = self._convert_4hour_data(candles_df)
+            df = self._convert_4hour_data(candles_df)
             return start, df
         return None
     
@@ -70,14 +70,20 @@ class CoinbaseWrapper(object):
         Returns:
             pd.DataFrame: The DataFrame containing 4-hour candles with columns ['date', 'low', 'high', 'open', 'close', 'volume'].
         """
+        # flip the indexing for traversing
+        candles_df.reset_index(inplace=True)
+
+        # start and end index for 4 hour candles
         start, end = None, None
         four_hour_candles = []
         for idx, row in candles_df.iterrows():
+            temp_date = datetime.strptime(row['date'], '%Y-%m-%d %H:%M:%S')
+            
             if len(four_hour_candles) >= 75: # 300 hours of data max returned from API 4 * 75 = 300
                 break # breaks out before it throws error for index not found
-            if (row['date'].hour % 4 == 0) and end is None:
+            if (temp_date.hour % 4 == 0) and end is None:
                 end = idx+1
-            elif (row['date'].hour % 4 == 0) and start is None:
+            elif (temp_date.hour % 4 == 0) and start is None:
                 start = idx+1
                 date = candles_df.at[end-1,'date']
                 # minimum low value in period
@@ -94,11 +100,15 @@ class CoinbaseWrapper(object):
                 four_hour_candles.append([date,low,high,open,close,volume])
                 # reset index's
                 start, end = None, start
-        return pd.DataFrame(four_hour_candles, columns=['date','low','high','open','close','volume'])
+        
+        # create a new dataframe and set the index
+        four_hour_df = pd.DataFrame(four_hour_candles, columns=['date','low','high','open','close','volume'])
+        four_hour_df.set_index('date', inplace=True)
+        return four_hour_df
 
-    def fetch_data(self, ticker: str, bartime: str, start: int):
+    def _fetch_data(self, ticker: str, bartime: str, start: int):
         """
-        Fetches candlestick data from the Coinbase API.
+        Fetches candlestick data from the Coinbase API. Gets the next 300 candles for the given ticker and bartime.
 
         Args:
             ticker (str): The ticker symbol for the cryptocurrency, expects form ex: btcusd.
@@ -112,10 +122,7 @@ class CoinbaseWrapper(object):
         """
         if bartime == '4_hour':
             # get the 4 hour data
-            candles_df = self.fetch_data(ticker, '1_hour', start)
-            if candles_df is not None:
-                return start, self._convert_4hour_data(candles_df)
-            return None
+            return self._get_4hour_data(ticker, start)
         
         # convert the bartime to seconds
         bartime = self.bartimes_convert[bartime]
@@ -137,7 +144,7 @@ class CoinbaseWrapper(object):
                 # create dataframe
                 candles_df = pd.DataFrame(candles, columns=['date','low','high','open','close','volume'])
                 # set the start of the next request
-                start = candles_df.loc[-1, 'date']
+                start = candles_df['date'].iloc[-1]
                 # convert the the timestamp to UTC (avoid overlapp with daylight savings time)
                 convert_date = lambda x: datetime.fromtimestamp(x , timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
                 candles_df['date'] = candles_df['date'].apply(convert_date)
@@ -146,22 +153,24 @@ class CoinbaseWrapper(object):
                 return start, candles_df
         return None, None
         
-    def get_data_in_date_range(self, ticker, bartime, start, end):
-        start, df = self.fetch_data(ticker, bartime, start)    
+    def get_data_in_date_range(self, ticker, bartime, start, end, save=False):
+        start, df = self._fetch_data(ticker, bartime, start)    
         # the start date or end date are invalid
         if start is None:
             self._logger.error(f"Failed to fetch {ticker} {bartime} candles data.")
             return None
         # loop through the data
         while start < end:
-            start, temp = self.fetch_data(ticker, bartime, start)
+            start, temp = self._fetch_data(ticker, bartime, start)
             df = pd.concat([df, temp])
             # reached the end of the data
             if start is None:
                 break
         # save the data to a csv file
-        df.to_csv(self._filepath_maker(ticker, bartime))
-        
+        if save:
+            df.to_csv(self._filepath_maker(ticker, bartime))
+        return df
+    
     def get_current_price(self, ticker: str):
         """
         Retrieves the current price of the given currency from the Coinbase API.
