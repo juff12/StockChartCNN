@@ -164,6 +164,4 @@ test.py
 api_key/
 
 # temp ignores
-inputs/raw/images/btcusd/5_minute
-inputs/raw/images/ethusd
-inputs/raw/images/solusd
+inputs/raw/crypto/images
