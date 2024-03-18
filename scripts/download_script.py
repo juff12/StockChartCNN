@@ -37,14 +37,14 @@ def running():
     parentdir = 'crypto'
     
     # read in the arrays for tickers
-    crypto_tickers = pickle.load(open('data/crypto/iterables/coinbase_tickers.pkl', 'rb'))
-    time_intervals = pickle.load(open('data/crypto/iterables/time_intervals.pkl', 'rb'))
+    crypto_tickers = pickle.load(open(f'data/{parentdir}/iterables/coinbase_tickers.pkl', 'rb'))
+    time_intervals = pickle.load(open(f'data/{parentdir}/iterables/time_intervals.pkl', 'rb'))
     
     coinbase = CoinbaseWrapper()
     
     # custom tickers and range
     crypto_tickers = ['btcusd', 'ethusd']
-    time_intervals = ['15_minute', '5_minute']
+    time_intervals = ['1_hour', '4_hour']
     
     #######################################
     # Find way to get ealiest listed data on coinbase
@@ -59,10 +59,11 @@ def running():
     for ticker in tqdm(crypto_tickers, desc='Crypto: '):
         for bartime in tqdm(time_intervals, desc='Bartime: '):
             data = coinbase.get_data_in_date_range(ticker, bartime, start, end, save=True)
+            print(data)
 
 def main():
-    testing()
-    #running()
+    #testing()
+    running()
     
 # run script
 if __name__ == '__main__':

@@ -65,6 +65,29 @@ class ChartImage:
             print('File does not exist or formatting is wrong')
             return None
     
+    def save_csv_step(self, data: pd.DataFrame):
+        """
+        Saves the data to a CSV file.
+
+        Args:
+            data (pd.DataFrame): The data to be saved to the file.
+        """
+        # gen bar units
+        _, unit = self._bartime.split('_')
+        # create the filename
+        filename = '{t}_{b}_{c}_{bs}_{nbs}_{nbg}_{id}'.format(t=self._ticker,b=self._bartime,
+                                                              c=self._chart_type,u=unit,bs=str(self._barspacing),
+                                                              id=self._id, nbs=str(self._num_bars_show),
+                                                              nbg=str(self._num_bar_gen))
+        # root directory for the file
+        file_root = 'inputs/raw/{p}/csv/{t}/{c}/{b}/{f}_data.csv'.format(p=self._parentdir,t=self._ticker,
+                                                                         c=self._chart_type,b=self._bartime,f=filename)
+        # create the file path
+        filepath = Path(file_root)
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        # save the data to the file
+        data.to_csv(filepath, index=False)
+        
     def save_screenshot(self, image: list):
         """
         Saves the screenshot image to a file.
@@ -83,7 +106,7 @@ class ChartImage:
                                                               id=self._id, nbs=str(self._num_bars_show),
                                                               nbg=str(self._num_bar_gen))
         # root directory for the file
-        file_root = 'inputs/raw/{p}/images/{t}/{c}/{b}/{f}_screenshot.png'.format(p=self._parentdir,t=self._ticker,
+        file_root = 'inputs/raw/{p}/images/{t}/{c}/{b}/{f}_screenshot.jpg'.format(p=self._parentdir,t=self._ticker,
                                                                                   c=self._chart_type,b=self._bartime,f=filename)
         # create the file path
         filepath = Path(file_root)
@@ -92,7 +115,8 @@ class ChartImage:
         with open(filepath, "wb") as out:
             out.write(image)
     
-    def _take_screenshot(self, chart: Chart, start: int, end: int):
+    @staticmethod
+    def _take_screenshot(chart: Chart, data: pd.DataFrame):
         """
         Takes a screenshot of the chart within the specified range.
 
@@ -105,15 +129,16 @@ class ChartImage:
             bytes: The screenshot image data.
         """
         # add the first set of data to the chart
-        chart.set(self._df.iloc[start:end])
+        chart.set(data)
         # fit bars to the chart
         chart.fit()
         # display the chart
         chart.show()
+        # take a screen shot of the chart
+        image = chart.screenshot()
         # exit the chart
         chart.exit()
-        # take a screenshot of the chart
-        return chart.screenshot()
+        return image
                 
     def sample_screenshots(self):
         """
@@ -126,13 +151,16 @@ class ChartImage:
         chart = self._setup_chart()
         # starting and ending index for the starting state
         start, end = 0, self._num_bars_show
-        image1 = self._take_screenshot(chart, start, end)
+        image1 = self._take_screenshot(chart, self._df.iloc[start:end])
+        
+        # init new chart
+        chart = self._setup_chart()
         # take a screenshot of the chart after incrementing
-        start, end = self._num_bar_gen, end + self._num_bars_show
-        image2 = chart.screenshot(chart, start, end)
+        start, end = self._num_bar_gen, end + self._num_bar_gen
+        image2 = self._take_screenshot(chart, self._df.iloc[start:end])
         return image1, image2
     
-    def create_chart_images(self, data, start=0, end=None):
+    def create_chart_images(self, data, csv_step, start=0, end=None):
         """
         Creates and saves chart images based on the provided data.
 
@@ -161,6 +189,9 @@ class ChartImage:
         image = chart.screenshot()
         # save the screenshot
         self.save_screenshot(image)
+        # save the csv of the data on the screen
+        if csv_step:
+            self.save_csv_step(data.iloc[start:end])
         
         # intialize variables to keep track of updates
         count, start, idx = 0, start + self._num_bar_gen, end
@@ -173,9 +204,13 @@ class ChartImage:
             chart.update(data.iloc[idx])
             # if we have generated enough bars or we are at the end of the data
             if count == self._num_bar_gen or idx + 1 == data['date'].size:
+                # take a screen shot of the chart
                 image = chart.screenshot()
                 self.save_screenshot(image)
-
+                # save the csv step of the data
+                if csv_step:
+                    self.save_csv_step(data.iloc[start:idx])
+                
                 # reset the count
                 count = 0
                 # increment the index
@@ -189,7 +224,7 @@ class ChartImage:
             count += 1
         chart.exit()
             
-    def batch_screenshot(self, batch_size=10_000):
+    def batch_screenshot(self, batch_size=10_000, csv_step=False):
         """
         Takes screenshots of stock chart images in batches.
 
@@ -202,5 +237,5 @@ class ChartImage:
             batch_df = self._df.iloc[i:i+batch_size].copy()
             if i + batch_size >= self._df['date'].size:
                 batch_df = self._df.iloc[i:].copy()
-            self.create_chart_images(batch_df)
+            self.create_chart_images(batch_df, csv_step=csv_step)
         
